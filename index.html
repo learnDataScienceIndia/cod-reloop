@@ -1,0 +1,1016 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Destruction Certificate</title>
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --dark-green: #145a23;
+            --light-green: #208736;
+            --text-dark: #222222;
+        }
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background-color: #e5e7eb;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* Controls Area */
+        .controls {
+            margin-bottom: 20px;
+            width: 100%;
+            max-width: 210mm;
+        }
+
+        .button-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 10px;
+            justify-content: center;
+        }
+
+        .btn {
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 14px;
+            font-weight: 600;
+            border-radius: 5px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: opacity 0.2s;
+        }
+        
+        .btn:hover { opacity: 0.9; }
+
+        .btn-primary { background-color: var(--dark-green); }
+        .btn-secondary { background-color: #0c2b5c; }
+        .btn-tertiary { background-color: #e74c3c; }
+        
+        .tip-text {
+            font-size: 13px;
+            color: #555;
+            text-align: center;
+            margin: 0;
+            background: #fff;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        /* Pages Container */
+        #pages-container {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+            align-items: center;
+        }
+
+        /* Exact A4 Page Box */
+        .page {
+            background-color: white;
+            width: 210mm;
+            height: 297mm; /* Exact A4 Height */
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            padding: 8mm; 
+            box-sizing: border-box;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            page-break-after: always;
+            break-after: page;
+            overflow: hidden; /* Keeps dragged images inside the specific page */
+        }
+
+        /* Watermark */
+        .watermark {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 70%;
+            opacity: 0.03;
+            z-index: 0;
+            pointer-events: none;
+            filter: grayscale(100%);
+        }
+
+        /* Border */
+        .certificate-border {
+            border: 5px solid var(--dark-green);
+            outline: 1px solid var(--light-green);
+            outline-offset: -8px;
+            flex-grow: 1;
+            box-sizing: border-box;
+            padding: 8mm 12mm;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Clean Professional Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 14px;
+            position: relative;
+            border-bottom: 3px solid var(--dark-green);
+        }
+        .header::after {
+            content: '';
+            position: absolute;
+            bottom: -6px;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, var(--dark-green), transparent, var(--dark-green));
+        }
+
+        /* Green gradient band below header */
+        .header-band {
+            background: linear-gradient(135deg, var(--dark-green) 0%, var(--light-green) 100%);
+            padding: 8px 12mm;
+            margin-left: -12mm;
+            margin-right: -12mm;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 30px;
+            margin-bottom: 20px;
+        }
+
+        .header-band-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: rgba(255,255,255,0.9);
+            font-size: 10px;
+            font-weight: 500;
+        }
+
+        .header-band-item i {
+            color: rgba(255,255,255,0.7);
+            font-size: 11px;
+        }
+
+        .header-band-divider {
+            width: 1px;
+            height: 20px;
+            background: rgba(255,255,255,0.3);
+        }
+
+        .logo-center {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .logo-center img {
+            width: 100px;
+            filter: drop-shadow(0 2px 6px rgba(0,0,0,0.1));
+        }
+
+        .company-name-tag {
+            font-size: 10px;
+            font-weight: 700;
+            color: var(--dark-green);
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+        }
+
+        .contact-info {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            justify-self: end;
+        }
+
+        .contact-row {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 8px;
+            font-size: 10px;
+            color: var(--text-dark);
+            font-weight: 500;
+        }
+
+        .contact-row i {
+            color: var(--light-green);
+            width: 14px;
+            text-align: center;
+            font-size: 11px;
+        }
+
+        /* Left placeholder so logo stays centered */
+        .header-left-spacer {
+            justify-self: start;
+        }
+
+        /* Date & Title Area */
+        .middle-header {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            margin-bottom: 25px;
+        }
+
+        .issue-date {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--dark-green);
+            margin-bottom: 8px;
+            align-self: flex-start;
+            background: rgba(20,90,35,0.06);
+            padding: 4px 12px;
+            border-radius: 3px;
+            border-left: 3px solid var(--dark-green);
+        }
+
+        .issue-date span {
+            color: var(--text-dark);
+            font-weight: 700;
+        }
+
+        /* Title Style - Centered with lines on both sides */
+        .title-wrapper {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            gap: 15px;
+            margin-top: 5px;
+        }
+
+        .title-line {
+            flex-grow: 1;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, var(--dark-green));
+            position: relative;
+        }
+
+        .title-line:last-child {
+            background: linear-gradient(270deg, transparent, var(--dark-green));
+        }
+
+        .title-line::after {
+            content: '';
+            position: absolute;
+            top: -3px;
+            width: 9px;
+            height: 9px;
+            background: var(--light-green);
+            border-radius: 50%;
+            border: 2px solid white;
+            box-shadow: 0 0 0 1px var(--light-green);
+        }
+
+        .title-line:first-child::after { right: -4px; }
+        .title-line:last-child::after { left: -4px; }
+
+        .title {
+            font-family: 'Oswald', sans-serif;
+            font-size: 36px;
+            font-weight: 700;
+            color: var(--dark-green);
+            margin: 0;
+            letter-spacing: 2px;
+            line-height: 1;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+
+        /* Unified Details Table */
+        .details-section {
+            width: 100%;
+            margin-bottom: 25px;
+        }
+
+        .details-table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+            font-size: 12.5px;
+            border: 2px solid var(--dark-green);
+        }
+
+        .details-table th, .details-table td {
+            padding: 7px 10px;
+            text-align: left;
+            border: 1px solid var(--dark-green);
+            position: relative;
+        }
+
+        .details-table th {
+            width: 18%;
+            font-weight: 700;
+            color: var(--dark-green);
+            background-color: rgba(20, 90, 35, 0.08);
+        }
+
+        .details-table td {
+            width: 32%;
+            font-weight: 500;
+            color: var(--text-dark);
+        }
+
+        /* Vertical divider between left and right sections */
+        .details-table td.divider-left {
+            border-right: 2px solid var(--dark-green);
+        }
+
+        .details-table tr:nth-child(even) {
+            background-color: rgba(20, 90, 35, 0.025);
+        }
+
+        .add-field-row td {
+            background: none !important;
+            border-top: 1px dashed var(--dark-green) !important;
+            padding: 5px 10px;
+        }
+
+        /* Dynamic Add/Remove Fields */
+        .remove-row-btn {
+            position: absolute;
+            left: -22px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 16px;
+            height: 16px;
+            background-color: #e74c3c;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.2s;
+            font-weight: bold;
+        }
+
+        .details-table tr:hover .remove-row-btn {
+            opacity: 1;
+        }
+
+        .add-row-btn {
+            background-color: transparent;
+            color: var(--light-green);
+            border: 1px dashed var(--light-green);
+            padding: 4px 10px;
+            font-size: 11px;
+            font-weight: 600;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .add-row-btn:hover {
+            background-color: rgba(32, 135, 54, 0.1);
+        }
+
+
+
+        /* Paragraphs */
+        .content-text {
+            font-size: 13px;
+            line-height: 1.7;
+            color: var(--text-dark);
+            text-align: justify;
+            margin-bottom: 30px;
+        }
+
+        .content-text p {
+            margin: 0 0 12px 0;
+            font-weight: 500;
+        }
+
+        .highlight-red {
+            color: #d32f2f;
+            font-weight: 700;
+        }
+
+        .certify-statement {
+            text-align: left;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-top: 20px !important;
+            font-size: 13px;
+            border-left: 3px solid var(--light-green);
+            padding-left: 12px;
+        }
+
+        /* Image Title */
+        .image-area-title {
+            text-align: center;
+            font-family: 'Oswald', sans-serif;
+            font-size: 20px;
+            color: var(--dark-green);
+            margin-top: 10px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .image-area-title::before, .image-area-title::after {
+            content: '';
+            flex-grow: 1;
+            height: 1px;
+            background: rgba(20,90,35,0.2);
+        }
+
+        /* Footer Accreditations - Pushed to Bottom of Page */
+        .footer-accreditations {
+            border-top: 1px solid #e0e0e0;
+            padding-top: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            background: white;
+            margin-top: auto; /* Pushes to bottom of the 297mm height */
+        }
+
+        .acc-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .acc-item img {
+            height: 38px;
+            object-fit: contain;
+        }
+
+        .acc-text {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .acc-text strong {
+            color: #0c2b5c;
+            font-size: 9px;
+            font-weight: 700;
+        }
+        
+        .acc-text span {
+            color: #555;
+            font-size: 7px;
+            line-height: 1.2;
+        }
+
+        /* UI Helpers */
+        .page-actions {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            display: flex;
+            gap: 10px;
+            z-index: 100;
+        }
+        
+        .page-action-btn {
+            background: rgba(12, 43, 92, 0.9);
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            font-size: 11px;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .page-action-btn.delete {
+            background: rgba(231, 76, 60, 0.9);
+        }
+
+        .page-action-btn:hover {
+            opacity: 1;
+        }
+
+        /* Editables */
+        [contenteditable="true"] {
+            outline: none;
+            border-bottom: none;
+            transition: background-color 0.2s;
+            border-radius: 2px;
+        }
+
+        [contenteditable="true"]:hover {
+            background-color: rgba(20, 90, 35, 0.04);
+        }
+        
+        [contenteditable="true"]:focus {
+            background-color: rgba(20, 90, 35, 0.07);
+            box-shadow: inset 0 -2px 0 var(--dark-green);
+        }
+
+        /* --- DRAGGABLE & RESIZABLE IMAGES --- */
+        .draggable-image {
+            display: inline-block;
+            cursor: move;
+            border: 1px solid transparent;
+            position: absolute;
+            z-index: 10;
+        }
+        .draggable-image.active {
+            border: 1px dashed #0c2b5c;
+            background: rgba(255,255,255,0.5);
+        }
+        .draggable-image .resizer {
+            width: 12px;
+            height: 12px;
+            background: #0B7C3B;
+            position: absolute;
+            right: -6px;
+            bottom: -6px;
+            cursor: nwse-resize;
+            display: none;
+            border-radius: 50%;
+            border: 2px solid white;
+        }
+        .draggable-image.active .resizer {
+            display: block;
+        }
+        .draggable-image .remove-btn {
+            width: 22px;
+            height: 22px;
+            background: #e74c3c;
+            color: white;
+            position: absolute;
+            top: -11px;
+            right: -11px;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 20px;
+            font-size: 16px;
+            cursor: pointer;
+            display: none;
+            font-weight: bold;
+            border: 2px solid white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        .draggable-image.active .remove-btn {
+            display: block;
+        }
+
+        /* Print Settings */
+        @media print {
+            @page { 
+                margin: 0; 
+                size: A4 portrait;
+            }
+            body { 
+                background-color: white; 
+                padding: 0; 
+                margin: 0; 
+            }
+            .controls, .page-actions { display: none !important; }
+            
+            #pages-container {
+                gap: 0;
+            }
+
+            .page { 
+                box-shadow: none; 
+                margin: 0; 
+            }
+            
+            [contenteditable="true"] { 
+                border-bottom: none !important;
+                box-shadow: none !important;
+                background-color: transparent !important;
+                outline: none !important;
+            }
+            .draggable-image { border: none !important; background: transparent !important; }
+            .resizer, .draggable-image .remove-btn { display: none !important; }
+            .remove-row-btn, .add-row-btn { display: none !important; }
+        }
+    </style>
+</head>
+<body>
+
+
+
+    <div class="controls">
+        <div class="button-group">
+            <button class="btn btn-primary" onclick="window.print()">
+                <i class="fa-solid fa-file-pdf"></i> Download PDF
+            </button>
+            <button class="btn btn-secondary" onclick="addBlankPage()">
+                <i class="fa-solid fa-file-circle-plus"></i> Add Blank Page
+            </button>
+            <input type="file" id="imageUpload" accept="image/*" style="display: none;" onchange="handleImageUpload(this)">
+        </div>
+        <p class="tip-text">
+            <i class="fa-solid fa-circle-info" style="color:#0B7C3B;"></i> <b>Pro Tip:</b> Scroll to the page you want, click "Add Image Here", and freely drag/resize it. Every page is exactly A4 size and prints perfectly!
+        </p>
+    </div>
+
+    <div id="pages-container">
+        
+        <!-- PAGE 1: Certificate -->
+        <div class="page" id="page-1">
+            <img src="https://github.com/learnDataScienceIndia/signature/blob/0fa070974f7c06bd9b8e544b431c8d56c19c57af/t%20logo.png?raw=true" class="watermark" alt="">
+
+            <div class="certificate-border">
+                
+                <!-- Clean Professional Header: Logo Left, Contact Right -->
+                <div class="header">
+                    <!-- Left: Logo + Company Name -->
+                    <div style="display: flex; align-items: center; gap: 14px;">
+                        <img src="https://github.com/learnDataScienceIndia/signature/blob/0fa070974f7c06bd9b8e544b431c8d56c19c57af/t%20logo.png?raw=true" alt="Reloop Recycling" style="width: 110px; filter: drop-shadow(0 2px 6px rgba(0,0,0,0.08));">
+                        <div style="border-left: 2px solid var(--dark-green); padding-left: 14px;">
+                            <div contenteditable="true" style="font-size: 17px; font-weight: 800; color: var(--dark-green); letter-spacing: 0.5px; line-height: 1.1;">RELOOP RECYCLING FZE</div>
+                            <div contenteditable="true" style="font-size: 10px; color: #666; font-weight: 500; margin-top: 3px; letter-spacing: 0.3px;">Certified E-Waste Recycling & Data Destruction</div>
+                        </div>
+                    </div>
+
+                    <!-- Right: Contact Info -->
+                    <div class="contact-info">
+                        <div class="contact-row">
+                            <span contenteditable="true">Telephone No. +971 04-332-6011</span>
+                            <i class="fa-solid fa-phone"></i>
+                        </div>
+                        <div class="contact-row">
+                            <span contenteditable="true">RA08 TC05 JAFZA, Dubai, UAE</span>
+                            <i class="fa-solid fa-location-dot"></i>
+                        </div>
+                        <div class="contact-row">
+                            <span contenteditable="true">www.reloopglobal.com</span>
+                            <i class="fa-solid fa-globe"></i>
+                        </div>
+                        <div class="contact-row">
+                            <span contenteditable="true">info@reloopglobal.com</span>
+                            <i class="fa-solid fa-envelope"></i>
+                        </div>
+                    </div>
+                </div>
+
+
+                <!-- Date and Title -->
+                <div class="middle-header">
+                    <div class="issue-date">
+                        <span contenteditable="true" style="color: var(--dark-green); font-weight: 700;">Issue Date:</span> <span contenteditable="true" id="dynamic-date"></span>
+                    </div>
+
+                    <div class="title-wrapper">
+                        <div class="title-line"></div>
+                        <h1 class="title" contenteditable="true">DESTRUCTION CERTIFICATE</h1>
+                        <div class="title-line"></div>
+                    </div>
+                </div>
+
+                <!-- Details Grid - Single Unified Table -->
+                <div class="details-section">
+                    <table class="details-table" id="details-main-table">
+                        <tbody>
+                            <tr>
+                                <th contenteditable="true"><div class="remove-row-btn" onclick="this.closest('tr').remove()">×</div>Company Name:</th>
+                                <td contenteditable="true" class="divider-left">NTS AMEGA GLOBAL</td>
+                                <th contenteditable="true">Waste Description:</th>
+                                <td contenteditable="true"></td>
+                            </tr>
+                            <tr>
+                                <th contenteditable="true"><div class="remove-row-btn" onclick="this.closest('tr').remove()">×</div>Date Received:</th>
+                                <td contenteditable="true" class="divider-left">27 April 2026</td>
+                                <th contenteditable="true">Weight:</th>
+                                <td contenteditable="true">102.5 kgs</td>
+                            </tr>
+                            <tr>
+                                <th contenteditable="true"><div class="remove-row-btn" onclick="this.closest('tr').remove()">×</div>Job Completed On:</th>
+                                <td contenteditable="true" class="divider-left">30 April 2026</td>
+                                <th contenteditable="true">Total Received:</th>
+                                <td contenteditable="true">Lot</td>
+                            </tr>
+                            <tr>
+                                <th contenteditable="true"><div class="remove-row-btn" onclick="this.closest('tr').remove()">×</div>Reference No:</th>
+                                <td contenteditable="true" class="divider-left">RRF-004/Apr/2026</td>
+                                <th contenteditable="true">Remarks:</th>
+                                <td contenteditable="true">100% Recycled and 0 landfill</td>
+                            </tr>
+                        </tbody>
+                        <tfoot>
+                            <tr class="add-field-row">
+                                <td colspan="4">
+                                    <button class="add-row-btn" onclick="addField()">+ Add Row</button>
+                                </td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+
+                <!-- Paragraphs -->
+                <div class="content-text">
+                    <p contenteditable="true">
+                        These items were received by Reloop Recycling. We apply a <span class="highlight-red">manual</span> dismantling process at JAFZA site in order to assure the maximum volume of secondary raw materials. These raw materials are recovered while minimizing negative effects on the environment. Every effort has been made to ensure the recycling of these materials has resulted in a minimum carbon footprint.
+                    </p>
+                    <p contenteditable="true">
+                        Our processes strictly adhere to international standards established by the United Nations Environment Program and the WEEE (Directive 2002/95/EC). Our work falls under Directive 2002/96/EC, which is promoting the collecting and recycling of electrical and electronic equipment. The factories we work with all fall under these guidelines.
+                    </p>
+                    <p class="certify-statement" contenteditable="true">
+                        Reloop Recycling certifies that the recycling of these materials has not caused harm to the health or the environment, either within or outside the United Arab Emirates.
+                    </p>
+                </div>
+
+
+
+                <!-- Footer Accreditations - Pushed to Bottom of Page -->
+                <div class="footer-accreditations" id="base-footer">
+                    <div class="acc-item">
+                        <img src="https://github.com/learnDataScienceIndia/signature/blob/main/WhatsApp%20Image%202026-04-10%20at%2017.43.12.jpeg?raw=true" alt="ISO 9001">
+                        <div class="acc-text">
+                            <strong contenteditable="true">ISO 9001:2015</strong>
+                            <span contenteditable="true">Quality Management</span>
+                        </div>
+                    </div>
+                    
+                    <div class="acc-item">
+                        <img src="https://github.com/learnDataScienceIndia/signature/blob/main/WhatsApp%20Image%202026-04-10%20at%2017.43.43.jpeg?raw=true" alt="ISO 45001">
+                        <div class="acc-text">
+                            <strong contenteditable="true">ISO 45001:2018</strong>
+                            <span contenteditable="true">Occupational Health<br>& Safety Management</span>
+                        </div>
+                    </div>
+                    
+                    <div class="acc-item">
+                        <img src="https://github.com/learnDataScienceIndia/signature/blob/main/WhatsApp%20Image%202026-04-10%20at%2017.43.54.jpeg?raw=true" alt="ISO 27001">
+                        <div class="acc-text">
+                            <strong contenteditable="true">ISO 27001:2022</strong>
+                            <span contenteditable="true">Information Security<br>Management</span>
+                        </div>
+                    </div>
+                    
+                    <div class="acc-item">
+                        <img src="https://github.com/learnDataScienceIndia/signature/blob/main/WhatsApp%20Image%202026-04-10%20at%2017.43.24.jpeg?raw=true" alt="ISO 14001">
+                        <div class="acc-text" style="color:var(--light-green)">
+                            <strong contenteditable="true" style="color:var(--light-green)">ISO 14001:2015</strong>
+                            <span contenteditable="true">Environmental<br>Management</span>
+                        </div>
+                    </div>
+                    
+                    <div class="acc-item">
+                        <img src="https://github.com/learnDataScienceIndia/signature/blob/main/WhatsApp%20Image%202026-04-10%20at%2017.46.49.jpeg?raw=true" alt="Accreditations" style="height: 38px;">
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // --- INITIALIZATION ---
+        document.addEventListener("DOMContentLoaded", function() {
+            // Set Date
+            const dateObj = new Date();
+            const day = dateObj.getDate();
+            const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+            const month = monthNames[dateObj.getMonth()];
+            const year = dateObj.getFullYear();
+            let suffix = "th";
+            if (day % 10 === 1 && day !== 11) suffix = "st";
+            else if (day % 10 === 2 && day !== 12) suffix = "nd";
+            else if (day % 10 === 3 && day !== 13) suffix = "rd";
+            document.getElementById("dynamic-date").innerHTML = day + "<sup>" + suffix + "</sup> " + month + " " + year;
+        });
+
+        // --- PAGE MANAGEMENT ---
+        function addBlankPage() {
+            const container = document.getElementById('pages-container');
+            const footerHTML = document.getElementById('base-footer').innerHTML;
+            
+            const newPage = document.createElement('div');
+            newPage.className = 'page';
+            newPage.innerHTML = `
+                <img src="https://github.com/learnDataScienceIndia/signature/blob/0fa070974f7c06bd9b8e544b431c8d56c19c57af/t%20logo.png?raw=true" class="watermark" alt="">
+                <div class="page-actions">
+                    <button class="page-action-btn" onclick="setActivePageAndUpload(this)">
+                        <i class="fa-solid fa-image"></i> Add Image Here
+                    </button>
+                    <button class="page-action-btn delete" onclick="this.closest('.page').remove()">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+                </div>
+                <div class="certificate-border">
+                    <div class="image-area-title" contenteditable="true" style="margin-top: 20px;">DESTRUCTION EVIDENCE</div>
+                    <div style="flex-grow:1;"></div>
+                    <div class="footer-accreditations" style="margin-top: auto;">
+                        ${footerHTML}
+                    </div>
+                </div>
+            `;
+            container.appendChild(newPage);
+            
+            // Scroll to the new page
+            window.scrollTo({
+                top: document.body.scrollHeight,
+                behavior: 'smooth'
+            });
+        }
+
+        // --- ADD FIELD LOGIC (single unified table) ---
+        function addField() {
+            const tbody = document.querySelector('#details-main-table tbody');
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <th contenteditable="true"><div class="remove-row-btn" onclick="this.closest('tr').remove()" title="Remove row">×</div>Label:</th>
+                <td contenteditable="true" class="divider-left">Value</td>
+                <th contenteditable="true">Label:</th>
+                <td contenteditable="true">Value</td>
+            `;
+            tbody.appendChild(row);
+        }
+
+
+
+
+
+        // --- DRAGGABLE IMAGE UPLOAD ---
+        let currentTargetPage = null;
+        let zIndexCounter = 10;
+
+        function setActivePageAndUpload(btn) {
+            currentTargetPage = btn.closest('.page');
+            document.getElementById('imageUpload').click();
+        }
+
+        function handleImageUpload(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) { addImageToPage(e.target.result); };
+                reader.readAsDataURL(input.files[0]);
+            }
+            input.value = ''; 
+        }
+
+        document.addEventListener('paste', function (e) {
+            if (e.clipboardData) {
+                const items = e.clipboardData.items;
+                for (let i = 0; i < items.length; i++) {
+                    if (items[i].type.indexOf('image') !== -1) {
+                        e.preventDefault(); 
+                        const blob = items[i].getAsFile();
+                        const reader = new FileReader();
+                        reader.onload = function(event) { addImageToPage(event.target.result); };
+                        reader.readAsDataURL(blob);
+                        return;
+                    }
+                }
+            }
+        });
+
+        function addImageToPage(imgSrc) {
+            // Default to the last page if not explicitly chosen
+            let targetPage = currentTargetPage;
+            if (!targetPage) {
+                const pages = document.querySelectorAll('.page');
+                targetPage = pages[pages.length - 1];
+            }
+            
+            const borderContainer = targetPage.querySelector('.certificate-border');
+            
+            const container = document.createElement('div');
+            container.className = 'draggable-image active';
+            
+            // Initial position inside the target page
+            container.style.top = '150px';
+            container.style.left = '50px';
+            container.style.zIndex = zIndexCounter++;
+            
+            const img = document.createElement('img');
+            img.src = imgSrc;
+            img.style.width = '250px';
+            img.style.height = 'auto';
+            img.style.display = 'block';
+            img.style.pointerEvents = 'none'; 
+            
+            const resizer = document.createElement('div');
+            resizer.className = 'resizer';
+            
+            const removeBtn = document.createElement('div');
+            removeBtn.className = 'remove-btn';
+            removeBtn.innerHTML = '×';
+            removeBtn.onclick = function(e) {
+                e.stopPropagation();
+                container.remove();
+            };
+            
+            container.appendChild(img);
+            container.appendChild(resizer);
+            container.appendChild(removeBtn);
+            borderContainer.appendChild(container); 
+            
+            makeDraggable(container, borderContainer);
+            makeResizable(container, img, resizer);
+
+            // Deselect others
+            document.querySelectorAll('.draggable-image').forEach(el => {
+                if (el !== container) el.classList.remove('active');
+            });
+            
+            currentTargetPage = null; // Reset
+        }
+
+        // Click outside to deselect
+        document.addEventListener('mousedown', function(e) {
+            if (!e.target.closest('.draggable-image') && !e.target.closest('.controls') && !e.target.closest('.page-actions')) {
+                document.querySelectorAll('.draggable-image').forEach(el => el.classList.remove('active'));
+            }
+        });
+
+        // --- DRAG LOGIC ---
+        function makeDraggable(element, boundary) {
+            let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+            element.onmousedown = dragMouseDown;
+
+            function dragMouseDown(e) {
+                if (e.target.className === 'resizer' || e.target.className === 'remove-btn') return;
+                e.preventDefault();
+                
+                document.querySelectorAll('.draggable-image').forEach(el => el.classList.remove('active'));
+                element.classList.add('active');
+                element.style.zIndex = zIndexCounter++;
+                
+                pos3 = e.clientX;
+                pos4 = e.clientY;
+                document.onmouseup = closeDragElement;
+                document.onmousemove = elementDrag;
+            }
+
+            function elementDrag(e) {
+                e.preventDefault();
+                pos1 = pos3 - e.clientX;
+                pos2 = pos4 - e.clientY;
+                pos3 = e.clientX;
+                pos4 = e.clientY;
+                
+                let newTop = element.offsetTop - pos2;
+                let newLeft = element.offsetLeft - pos1;
+                
+                element.style.top = newTop + "px";
+                element.style.left = newLeft + "px";
+            }
+
+            function closeDragElement() {
+                document.onmouseup = null;
+                document.onmousemove = null;
+            }
+        }
+
+        // --- RESIZE LOGIC ---
+        function makeResizable(element, img, resizer) {
+            let originalWidth = 0;
+            let originalMouseX = 0;
+            
+            resizer.addEventListener('mousedown', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                element.classList.add('active');
+                originalWidth = parseFloat(getComputedStyle(img, null).getPropertyValue('width').replace('px', ''));
+                originalMouseX = e.pageX;
+                
+                document.addEventListener('mousemove', resize);
+                document.addEventListener('mouseup', stopResize);
+            });
+            
+            function resize(e) {
+                const width = originalWidth + (e.pageX - originalMouseX);
+                if (width > 20) {
+                    img.style.width = width + 'px';
+                }
+            }
+            
+            function stopResize() {
+                document.removeEventListener('mousemove', resize);
+                document.removeEventListener('mouseup', stopResize);
+            }
+        }
+    </script>
+</body>
+</html>
