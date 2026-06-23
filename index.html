@@ -602,11 +602,70 @@
             display: block;
         }
 
+        /* Landscape Mode overrides */
+        body.landscape-mode .page {
+            width: 297mm;
+            height: 210mm;
+            padding: 8mm 12mm;
+        }
+        
+        body.landscape-mode .certificate-border {
+            padding: 5mm 25mm 5mm 25mm;
+        }
+
+        body.landscape-mode .header {
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+        }
+
+        body.landscape-mode .contact-info div {
+            margin-bottom: 2px !important;
+        }
+
+        body.landscape-mode .middle-header {
+            margin-top: 15px;
+            margin-bottom: 10px;
+        }
+
+        body.landscape-mode .title {
+            font-size: 20px;
+        }
+
+        body.landscape-mode .details-table th, 
+        body.landscape-mode .details-table td {
+            padding: 4px 12px;
+            font-size: 11px;
+        }
+
+        body.landscape-mode .content-text p {
+            margin: 0 0 5px 0;
+            font-size: 11px;
+        }
+
+        body.landscape-mode .certify-statement {
+            margin-top: 10px !important;
+            font-size: 11px;
+        }
+
+        body.landscape-mode .watermark {
+            width: 40%;
+        }
+
+        body.landscape-mode .footer-accreditations {
+            margin-top: 5px;
+            transform: scale(0.85);
+            transform-origin: bottom center;
+        }
+
         /* Print Settings */
         @media print {
             @page {
                 margin: 0;
                 size: A4 portrait;
+            }
+
+            body.landscape-mode @page {
+                size: A4 landscape;
             }
 
             body {
@@ -666,8 +725,19 @@
             <button class="btn btn-secondary" onclick="addBlankPage()">
                 <i class="fa-solid fa-file-circle-plus"></i> Add Blank Page
             </button>
+            <button class="btn btn-primary" style="background-color: #27ae60;" onclick="saveProject()">
+                <i class="fa-solid fa-save"></i> Save Project
+            </button>
+            <button class="btn btn-primary" style="background-color: #8e44ad;" onclick="document.getElementById('projectUpload').click()">
+                <i class="fa-solid fa-upload"></i> Load Project
+            </button>
+            <select id="orientationSelect" class="btn" style="background-color: #34495e; color: white; border: none; font-weight: 600; padding: 10px 15px; border-radius: 5px;" onchange="changeOrientation()">
+                <option value="portrait">Portrait (A4)</option>
+                <option value="landscape">Landscape (A4)</option>
+            </select>
             <input type="file" id="imageUpload" accept="image/*" style="display: none;"
                 onchange="handleImageUpload(this)">
+            <input type="file" id="projectUpload" accept=".json" style="display: none;" onchange="loadProject(this)">
         </div>
         <p class="tip-text">
             <i class="fa-solid fa-circle-info" style="color:#0B7C3B;"></i> <b>Pro Tip:</b> Scroll to the page you want,
@@ -698,7 +768,7 @@
                         <div contenteditable="true"
                             style="font-size: 22px; font-family: 'Oswald', sans-serif; font-weight: 600; color: var(--dark-green); letter-spacing: 0.5px; line-height: 1.1; margin-bottom: 15px;">
                             RELOOP RECYCLING FZE</div>
-                        
+
                         <div class="contact-row">
                             <span contenteditable="true">Telephone No. +971 04-332-6011</span>
                             <i class="fa-solid fa-phone"></i>
@@ -1069,7 +1139,103 @@
                 document.removeEventListener('mouseup', stopResize);
             }
         }
+
+        // --- SAVE / LOAD PROJECT ---
+        function saveProject() {
+            const pagesContainer = document.getElementById('pages-container');
+            // Clean up any "active" classes before saving so we don't save selection borders
+            document.querySelectorAll('.draggable-image').forEach(el => el.classList.remove('active'));
+
+            const orientation = document.getElementById('orientationSelect').value;
+
+            const projectData = {
+                pagesHTML: pagesContainer.innerHTML,
+                orientation: orientation
+            };
+
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(projectData));
+            const downloadAnchorNode = document.createElement('a');
+            downloadAnchorNode.setAttribute("href", dataStr);
+            
+            // Try to find the Certificate No to use as filename
+            let fileName = "certificate_project";
+            const thElements = document.querySelectorAll('.details-table th');
+            for (let th of thElements) {
+                const text = th.textContent || "";
+                if (text.toLowerCase().includes('certificate') && text.toLowerCase().includes('no')) {
+                    const td = th.nextElementSibling;
+                    if (td && td.tagName.toLowerCase() === 'td') {
+                        let certVal = td.textContent || "";
+                        certVal = certVal.trim();
+                        // Replace characters that are invalid in filenames with dashes
+                        certVal = certVal.replace(/[\/\\?%*:|"<>]/g, '-');
+                        if (certVal) fileName = certVal;
+                    }
+                    break;
+                }
+            }
+            
+            downloadAnchorNode.setAttribute("download", fileName + ".json");
+            document.body.appendChild(downloadAnchorNode); // required for firefox
+            downloadAnchorNode.click();
+            downloadAnchorNode.remove();
+        }
+
+        function loadProject(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    try {
+                        const projectData = JSON.parse(e.target.result);
+                        if (projectData && projectData.pagesHTML) {
+                            document.getElementById('pages-container').innerHTML = projectData.pagesHTML;
+                            
+                            if (projectData.orientation) {
+                                document.getElementById('orientationSelect').value = projectData.orientation;
+                                changeOrientation();
+                            }
+                            
+                            // Re-initialize drag/resize functionality for all loaded images
+                            document.querySelectorAll('.draggable-image').forEach(container => {
+                                const img = container.querySelector('img');
+                                const resizer = container.querySelector('.resizer');
+                                const borderContainer = container.closest('.certificate-border');
+                                makeDraggable(container, borderContainer);
+                                makeResizable(container, img, resizer);
+                            });
+
+                            alert("Project loaded successfully!");
+                        } else {
+                            alert("Invalid project file.");
+                        }
+                    } catch(err) {
+                        alert("Error loading project file.");
+                    }
+                };
+                reader.readAsText(input.files[0]);
+            }
+            input.value = ''; // reset
+        }
+
+        function changeOrientation() {
+            const orientation = document.getElementById('orientationSelect').value;
+            const styleId = 'print-orientation-style';
+            let styleEl = document.getElementById(styleId);
+            
+            if (!styleEl) {
+                styleEl = document.createElement('style');
+                styleEl.id = styleId;
+                document.head.appendChild(styleEl);
+            }
+
+            if (orientation === 'landscape') {
+                document.body.classList.add('landscape-mode');
+                styleEl.innerHTML = `@page { size: A4 landscape !important; margin: 0; }`;
+            } else {
+                document.body.classList.remove('landscape-mode');
+                styleEl.innerHTML = `@page { size: A4 portrait !important; margin: 0; }`;
+            }
+        }
     </script>
 </body>
-
 </html>
