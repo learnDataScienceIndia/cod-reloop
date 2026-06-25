@@ -138,6 +138,32 @@
             background: transparent;
         }
 
+        /* Alignment Guides */
+        .alignment-guide-v, .alignment-guide-h {
+            position: absolute;
+            background: #3498db;
+            display: none;
+            z-index: 100;
+            pointer-events: none;
+        }
+        .alignment-guide-v { width: 1px; top: 0; bottom: 0; }
+        .alignment-guide-h { height: 1px; left: 0; right: 0; }
+        
+        .alignment-tooltip {
+            position: absolute;
+            background: #3498db;
+            color: white;
+            font-size: 10px;
+            font-weight: bold;
+            padding: 3px 6px;
+            border-radius: 3px;
+            display: none;
+            z-index: 101;
+            pointer-events: none;
+            white-space: nowrap;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
         /* Clean Professional Header */
         .header {
             display: flex;
@@ -562,20 +588,41 @@
             background: rgba(255, 255, 255, 0.5);
         }
 
-        .draggable-image .resizer {
+        .draggable-image .resizer-se,
+        .draggable-image .resizer-e,
+        .draggable-image .resizer-s {
             width: 12px;
             height: 12px;
             background: #0B7C3B;
             position: absolute;
-            right: -6px;
-            bottom: -6px;
-            cursor: nwse-resize;
             display: none;
             border-radius: 50%;
             border: 2px solid white;
         }
 
-        .draggable-image.active .resizer {
+        .draggable-image .resizer-se {
+            right: -6px;
+            bottom: -6px;
+            cursor: nwse-resize;
+        }
+
+        .draggable-image .resizer-e {
+            right: -6px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: ew-resize;
+        }
+
+        .draggable-image .resizer-s {
+            bottom: -6px;
+            left: 50%;
+            transform: translateX(-50%);
+            cursor: ns-resize;
+        }
+
+        .draggable-image.active .resizer-se,
+        .draggable-image.active .resizer-e,
+        .draggable-image.active .resizer-s {
             display: block;
         }
 
@@ -695,12 +742,16 @@
                 outline: none !important;
             }
 
+            .alignment-guide-v, .alignment-guide-h, .alignment-tooltip {
+                display: none !important;
+            }
+
             .draggable-image {
                 border: none !important;
                 background: transparent !important;
             }
 
-            .resizer,
+            .resizer-se, .resizer-e, .resizer-s,
             .draggable-image .remove-btn {
                 display: none !important;
             }
@@ -735,6 +786,7 @@
                 <option value="portrait">Portrait (A4)</option>
                 <option value="landscape">Landscape (A4)</option>
             </select>
+
             <input type="file" id="imageUpload" accept="image/*" style="display: none;"
                 onchange="handleImageUpload(this)">
             <input type="file" id="projectUpload" accept=".json" style="display: none;" onchange="loadProject(this)">
@@ -961,6 +1013,16 @@
             });
         }
 
+        function getOrCreateGuides(borderContainer) {
+            let guideV = borderContainer.querySelector('.alignment-guide-v');
+            if (!guideV) { guideV = document.createElement('div'); guideV.className = 'alignment-guide-v'; borderContainer.appendChild(guideV); }
+            let guideH = borderContainer.querySelector('.alignment-guide-h');
+            if (!guideH) { guideH = document.createElement('div'); guideH.className = 'alignment-guide-h'; borderContainer.appendChild(guideH); }
+            let tooltip = borderContainer.querySelector('.alignment-tooltip');
+            if (!tooltip) { tooltip = document.createElement('div'); tooltip.className = 'alignment-tooltip'; borderContainer.appendChild(tooltip); }
+            return { guideV, guideH, tooltip };
+        }
+
         // --- ADD FIELD LOGIC (single unified table) ---
         function addField() {
             const tbody = document.querySelector('#details-main-table tbody');
@@ -1037,8 +1099,12 @@
             img.style.display = 'block';
             img.style.pointerEvents = 'none';
 
-            const resizer = document.createElement('div');
-            resizer.className = 'resizer';
+            const resizerSE = document.createElement('div');
+            resizerSE.className = 'resizer-se';
+            const resizerE = document.createElement('div');
+            resizerE.className = 'resizer-e';
+            const resizerS = document.createElement('div');
+            resizerS.className = 'resizer-s';
 
             const removeBtn = document.createElement('div');
             removeBtn.className = 'remove-btn';
@@ -1049,12 +1115,14 @@
             };
 
             container.appendChild(img);
-            container.appendChild(resizer);
+            container.appendChild(resizerSE);
+            container.appendChild(resizerE);
+            container.appendChild(resizerS);
             container.appendChild(removeBtn);
             borderContainer.appendChild(container);
 
             makeDraggable(container, borderContainer);
-            makeResizable(container, img, resizer);
+            makeResizable(container, img, resizerSE, resizerE, resizerS);
 
             // Deselect others
             document.querySelectorAll('.draggable-image').forEach(el => {
@@ -1077,7 +1145,7 @@
             element.onmousedown = dragMouseDown;
 
             function dragMouseDown(e) {
-                if (e.target.className === 'resizer' || e.target.className === 'remove-btn') return;
+                if (e.target.className.includes('resizer') || e.target.className === 'remove-btn') return;
                 e.preventDefault();
 
                 document.querySelectorAll('.draggable-image').forEach(el => el.classList.remove('active'));
@@ -1099,6 +1167,42 @@
 
                 let newTop = element.offsetTop - pos2;
                 let newLeft = element.offsetLeft - pos1;
+                
+                // Alignment Snapping Logic
+                const threshold = 5;
+                const { guideV, guideH, tooltip } = getOrCreateGuides(boundary);
+                guideV.style.display = 'none';
+                guideH.style.display = 'none';
+                tooltip.style.display = 'none';
+
+                const others = Array.from(boundary.querySelectorAll('.draggable-image')).filter(el => el !== element);
+
+                for (let other of others) {
+                    const otherLeft = other.offsetLeft;
+                    const otherTop = other.offsetTop;
+                    const otherRight = otherLeft + other.offsetWidth;
+                    const otherBottom = otherTop + other.offsetHeight;
+                    
+                    if (Math.abs(newLeft - otherLeft) < threshold) {
+                        newLeft = otherLeft;
+                        guideV.style.display = 'block';
+                        guideV.style.left = newLeft + 'px';
+                    } else if (Math.abs(newLeft - otherRight) < threshold) {
+                        newLeft = otherRight;
+                        guideV.style.display = 'block';
+                        guideV.style.left = newLeft + 'px';
+                    }
+                    
+                    if (Math.abs(newTop - otherTop) < threshold) {
+                        newTop = otherTop;
+                        guideH.style.display = 'block';
+                        guideH.style.top = newTop + 'px';
+                    } else if (Math.abs(newTop - otherBottom) < threshold) {
+                        newTop = otherBottom;
+                        guideH.style.display = 'block';
+                        guideH.style.top = newTop + 'px';
+                    }
+                }
 
                 element.style.top = newTop + "px";
                 element.style.left = newLeft + "px";
@@ -1107,36 +1211,108 @@
             function closeDragElement() {
                 document.onmouseup = null;
                 document.onmousemove = null;
+                const { guideV, guideH, tooltip } = getOrCreateGuides(boundary);
+                guideV.style.display = 'none';
+                guideH.style.display = 'none';
+                tooltip.style.display = 'none';
             }
         }
 
         // --- RESIZE LOGIC ---
-        function makeResizable(element, img, resizer) {
+        function makeResizable(element, img, resizerSE, resizerE, resizerS) {
             let originalWidth = 0;
+            let originalHeight = 0;
             let originalMouseX = 0;
+            let originalMouseY = 0;
+            let resizeType = '';
 
-            resizer.addEventListener('mousedown', function (e) {
+            function initResize(e, type) {
                 e.preventDefault();
                 e.stopPropagation();
 
                 element.classList.add('active');
                 originalWidth = parseFloat(getComputedStyle(img, null).getPropertyValue('width').replace('px', ''));
+                originalHeight = parseFloat(getComputedStyle(img, null).getPropertyValue('height').replace('px', ''));
                 originalMouseX = e.pageX;
+                originalMouseY = e.pageY;
+                resizeType = type;
+
+                img.style.width = originalWidth + 'px';
+                img.style.height = originalHeight + 'px';
 
                 document.addEventListener('mousemove', resize);
                 document.addEventListener('mouseup', stopResize);
-            });
+            }
+
+            if (resizerSE) resizerSE.addEventListener('mousedown', function(e) { initResize(e, 'se'); });
+            if (resizerE) resizerE.addEventListener('mousedown', function(e) { initResize(e, 'e'); });
+            if (resizerS) resizerS.addEventListener('mousedown', function(e) { initResize(e, 's'); });
 
             function resize(e) {
-                const width = originalWidth + (e.pageX - originalMouseX);
-                if (width > 20) {
+                const boundary = element.closest('.certificate-border');
+                const others = Array.from(boundary.querySelectorAll('.draggable-image')).filter(el => el !== element);
+                const { tooltip } = getOrCreateGuides(boundary);
+                tooltip.style.display = 'none';
+                const threshold = 5;
+
+                let width = originalWidth;
+                let height = originalHeight;
+
+                if (resizeType === 'e') {
+                    width = originalWidth + (e.pageX - originalMouseX);
+                } else if (resizeType === 's') {
+                    height = originalHeight + (e.pageY - originalMouseY);
+                } else if (resizeType === 'se') {
+                    const widthDelta = e.pageX - originalMouseX;
+                    const scale = (originalWidth + widthDelta) / originalWidth;
+                    width = originalWidth * scale;
+                    height = originalHeight * scale;
+                }
+
+                let snapped = false;
+                let snapText = '';
+
+                for (let other of others) {
+                    const otherW = parseFloat(getComputedStyle(other.querySelector('img')).width);
+                    const otherH = parseFloat(getComputedStyle(other.querySelector('img')).height);
+                    
+                    if ((resizeType === 'e' || resizeType === 'se') && Math.abs(width - otherW) < threshold) {
+                        width = otherW;
+                        if (resizeType === 'se') height = originalHeight * (width / originalWidth);
+                        snapped = true;
+                        snapText = 'Width Aligned';
+                    }
+                    if ((resizeType === 's' || resizeType === 'se') && Math.abs(height - otherH) < threshold) {
+                        height = otherH;
+                        if (resizeType === 'se') width = originalWidth * (height / originalHeight);
+                        snapped = true;
+                        snapText = 'Height Aligned';
+                    }
+                }
+
+                if (width > 20 && height > 20) {
                     img.style.width = width + 'px';
+                    img.style.height = height + 'px';
+                }
+
+                if (snapped) {
+                    tooltip.style.display = 'block';
+                    tooltip.innerHTML = snapText;
+                    tooltip.style.top = (element.offsetTop - 25) + 'px';
+                    tooltip.style.left = element.offsetLeft + 'px';
+                    element.style.borderColor = '#3498db';
+                } else {
+                    element.style.borderColor = ''; // reset to default active
                 }
             }
 
             function stopResize() {
                 document.removeEventListener('mousemove', resize);
                 document.removeEventListener('mouseup', stopResize);
+                const boundary = element.closest('.certificate-border');
+                const { tooltip } = getOrCreateGuides(boundary);
+                tooltip.style.display = 'none';
+                element.style.borderColor = '';
             }
         }
 
@@ -1195,13 +1371,35 @@
                                 changeOrientation();
                             }
                             
+                            // Try to infer grid state from loaded HTML (Removed)
+
                             // Re-initialize drag/resize functionality for all loaded images
                             document.querySelectorAll('.draggable-image').forEach(container => {
                                 const img = container.querySelector('img');
-                                const resizer = container.querySelector('.resizer');
+                                
+                                // Upgrade old projects dynamically
+                                if (container.querySelector('.resizer')) {
+                                    container.querySelector('.resizer').className = 'resizer-se';
+                                }
+                                
+                                let rSE = container.querySelector('.resizer-se');
+                                let rE = container.querySelector('.resizer-e');
+                                let rS = container.querySelector('.resizer-s');
+                                
+                                if (!rE) {
+                                    rE = document.createElement('div');
+                                    rE.className = 'resizer-e';
+                                    container.appendChild(rE);
+                                }
+                                if (!rS) {
+                                    rS = document.createElement('div');
+                                    rS.className = 'resizer-s';
+                                    container.appendChild(rS);
+                                }
+
                                 const borderContainer = container.closest('.certificate-border');
                                 makeDraggable(container, borderContainer);
-                                makeResizable(container, img, resizer);
+                                makeResizable(container, img, rSE, rE, rS);
                             });
 
                             alert("Project loaded successfully!");
