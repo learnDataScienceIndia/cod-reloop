@@ -17,6 +17,7 @@
             --dark-green: #145a23;
             --light-green: #208736;
             --text-dark: #222222;
+            --image-border-width: 10px;
         }
 
         body {
@@ -583,6 +584,11 @@
             z-index: 10;
         }
 
+        .draggable-image img {
+            border: var(--image-border-width) solid var(--dark-green);
+            box-sizing: border-box;
+        }
+
         .draggable-image.active {
             border: 1px dashed #0c2b5c;
             background: rgba(255, 255, 255, 0.5);
@@ -786,6 +792,12 @@
                 <option value="portrait">Portrait (A4)</option>
                 <option value="landscape">Landscape (A4)</option>
             </select>
+
+            <div style="display: flex; align-items: center; gap: 10px; background: white; padding: 5px 15px; border-radius: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                <label for="imageBorderSlider" style="font-size: 14px; font-weight: 600; color: var(--dark-green);">Image Border:</label>
+                <input type="range" id="imageBorderSlider" min="0" max="50" value="10" oninput="updateImageBorder(this.value)">
+                <span id="borderWidthDisplay" style="font-size: 14px; font-weight: 600;">10px</span>
+            </div>
 
             <input type="file" id="imageUpload" accept="image/*" style="display: none;"
                 onchange="handleImageUpload(this)">
@@ -1433,6 +1445,11 @@
                 document.body.classList.remove('landscape-mode');
                 styleEl.innerHTML = `@page { size: A4 portrait !important; margin: 0; }`;
             }
+        }
+
+        function updateImageBorder(value) {
+            document.documentElement.style.setProperty('--image-border-width', value + 'px');
+            document.getElementById('borderWidthDisplay').innerText = value + 'px';
         }
     </script>
 </body>
